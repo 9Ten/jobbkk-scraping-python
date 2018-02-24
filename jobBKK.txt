@@ -1,0 +1,77 @@
+# JobBKK
+https://www.jobbkk.com/resumes/detail/1495780/
+
+RESUME_ID = 1491830
+[
+    RESUME_ID,
+    LastModified,
+    Gender,
+    Age,
+    Experience,
+    FullOrPartTime,
+    StartingIn,
+    WorkAbroad,
+    Location,
+    AskedSalary,
+    Category1,
+    Position1,
+    Category2,
+    Position2,
+    Category3,
+    Position3,
+    Ex-Workdate1,
+    Ex-Position1,
+    Ex-Company1,
+    Ex-Location1,
+    Ex-Salary1,
+    Ex-Workdate2,
+    Ex-Position2,
+    Ex-Company2,
+    Ex-Location2,
+    Ex-Salary2,
+    Ex-Workdate3,
+    Ex-Position3,
+    Ex-Company3,
+    Ex-Location3,
+    Ex-Salary3,
+    Ex-Workdate4,
+    Ex-Position4,
+    Ex-Company4,
+    Ex-Location4,
+    Ex-Salary4
+]
+class="row-fluid borBcccD pull-left"
+info_list = class="padV10H20"
+id="resume_want"
+id="resume_skill"
+
+# Info, Edu-Info, Work-Exp
+
+ข้อมูลโดยสังเขป
+class: "span11 marL10 padB10 padL20 "
+
+#JobBKK
+col_resume
+col_vacancy
+
+get_resume_raw()
+#resumeDT #left
+#box_right
+
+get_resume_index()
+.div.pad5 .div.span5
+a.checkClicklist['href']
+
+get_resume_result()
+handle_jobbkk()
+
+get_job_raw()
+#left
+#box_right
+class="interesting-content"
+
+get_job_index()
+.div.jssearchCon.hs.a['href']
+
+get_job_result()
+
