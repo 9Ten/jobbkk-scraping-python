@@ -1,4 +1,6 @@
 #=== job_page const ===#
+header = {'User-Agent': 'Chrome/64.0.3282.186'}
+
 edu_dict = {
     'ปริญญาตรี': 'BAC',
     'ปริญญาตรี ขึ้นไป': 'BAC+',
