@@ -1,13 +1,19 @@
 #=== job_page const ===#
 header = {'User-Agent': 'Chrome/64.0.3282.186'}
 
-edu_dict = {
+DATABASE_CONFIG = {
+    'dbname': 'jobBkk',
+    'host': 'localhost',
+    'port': 27017
+}
+
+edu_mapper = {
     'ปริญญาตรี': 'BAC',
     'ปริญญาตรี ขึ้นไป': 'BAC+',
     'ปริญญาโท': 'MAS',
     'ปริญญาโท ขึ้นไป': 'MAS+',
     'ปริญญาเอก': 'DOC',
-    'ปวช.': 'LVC',
+    'ปวช.': 'LVC', 
     'ปวส.': 'HVC',
     'ปวส. ขึ้นไป': 'HVC+',
     'ม.6': 'M6',
@@ -16,35 +22,54 @@ edu_dict = {
 }
 
 #=== resume_page const ===#
-train_mapper = [
+resume_want_mapper = {
+    'รูปแบบงาน:': 'job_type',
+    'สาขาอาชีพ:': 'asked_job',
+    'ตำแหน่ง:': 'asked_job',
+    'พื้นที่ที่ต้องการทำงาน:': 'asked_location',
+    'เงินเดือนที่ต้องการ:': 'asked_salary',
+    'ระยะเวลาเริ่มงาน:': 'start_in',
+    'ยินดีทำงานต่างประเทศ:': 'work_aboard'
+}
+
+resume_skill_mapper = {
+    'ยานพาหนะ': 'own_vehicle',
+    'ความสามารถในการขับขี่': 'skill_vehicle',
+    'ใบอนุญาติขับขี่': 'drive_license',
+    'ทักษะทางภาษา': 'skill_lang',
+    'ทักษะการพิมพ์ดีด': 'skill_typing',
+    'ทักษะอื่นๆ': 'skill_other'
+}
+
+train_mapper = {
     'session',
     'institute',
     'course'
-]
+}
 
-edu_mapper = [
+edu_mapper = {
     'location',
     'institute',
     'level',
     'edu',
     'field',
     'gpa'
-]
+}
 
-exp_mapper = [
+exp_mapper = {
     'workdate',
     'position',
     'company',
     'location',
     'salary'
-]
+}
 
-skill_mapper = [
+skill_mapper = {
     'listen',
     'peak',
     'read',
     'write'
-]
+}
 
 lang_mapper = {
     "ดีมาก": "Excellent",
@@ -53,7 +78,7 @@ lang_mapper = {
     "แย่": "Poor"
 }
 
-occupation_dict = {
+occupation_mapper = {
     '233': 'กฎหมาย',
     '234': 'การขาย/ส่งเสริมการขาย',
     '235': 'การเงิน/การธนาคาร',
