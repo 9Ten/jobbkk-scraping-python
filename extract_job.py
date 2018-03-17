@@ -47,12 +47,13 @@ def retry(url):
     try:
         res = requests.get(url, headers=header, timeout=10)
         time.sleep(0.1)
+        if res.status_code == 200:
+            return res  
     except Exception as e:
         print("===== RETRY =====")
         print(e)
         print("Continue ...")
         retry(url)
-    return res
 
 
 def check_id(url):
@@ -145,11 +146,7 @@ def job_page(url, _id):
     soup = BeautifulSoup(res.content, 'lxml')
     #=== Extract Json ===#
     try:
-        try:
-            data_dict_str = soup.find_all('script', {"type": "application/ld+json"})[1].text
-        except IndexError:
-            data_dict_str = soup.find_all('script', {"type": r"application/ld+json"})
-            print(data_dict_str)
+        data_dict_str = soup.find_all('script', {"type": "application/ld+json"})[1].text
         data_dict = fix_JSON(data_dict_str)
         job_title = data_dict['title']
         description = data_dict['description']

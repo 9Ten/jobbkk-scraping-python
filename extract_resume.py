@@ -49,12 +49,13 @@ def retry(url):
     try:
         res = requests.get(url, headers=header, timeout=10)
         time.sleep(0.1)
+        if res.status_code == 200:
+            return res 
     except Exception as e:
         print("===== RETRY =====")
         print(e)
         print("Continue ...")
         retry(url)
-    return res
 
 
 def check_id(url):
