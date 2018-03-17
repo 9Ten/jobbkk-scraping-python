@@ -28,7 +28,7 @@ def connect_db():
 conn = connect_db()
 dbname = config.DATABASE_CONFIG['dbname']
 col_bkk_resume_info = conn[dbname]['resume_info']
-col_bkk_update = conn[dbname]['bkk_updadte']
+col_bkk_update = conn[dbname]['bkk_update']
 col_bkk_log = conn[dbname]['bkk_log']
 
 pp = pprint.PrettyPrinter(indent=4)
@@ -96,7 +96,7 @@ def resume_page_list(url):
         print("resume_page_list")
     #=== Looping Extract resume_id ===#
     resume_link_list = [_['href'] for _ in resume_list]
-    resume_link_list = [check_id(_) for _ in resume_link_list]
+    resume_link_list = [check_id(_) for _ in set(resume_link_list)]
     resume_link_list = [_ for _ in resume_link_list if _ != None]
 
     #=== Parallel [multiprocessing] ===#
