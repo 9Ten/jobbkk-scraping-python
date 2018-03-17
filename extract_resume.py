@@ -13,7 +13,6 @@ import pymongo
 import config
 
 
-
 #=== mongoDB Config ===#
 def connect_db():
     try:
@@ -22,8 +21,9 @@ def connect_db():
             port=config.DATABASE_CONFIG['port'],
         )
     except Exception as e:
-        print('Error Connection')
+        print('Error Connection', e)
     return conn
+
 
 conn = connect_db()
 dbname = config.DATABASE_CONFIG['dbname']
@@ -37,7 +37,7 @@ base_url = "https://www.jobbkk.com"
 
 #=== Initial const ====#
 lang_mapper = config.lang_mapper
-edu_dict = config.edu_mapper
+edu_dict = config.edu_lvl_mapper
 edu_mapper = config.edu_mapper
 exp_mapper = config.exp_mapper
 train_mapper = config.train_mapper
@@ -50,7 +50,7 @@ def retry(url):
     while chk_status != 200:
         try:
             res = requests.get(url, headers=header, timeout=10)
-            time.sleep(0.25)
+            time.sleep(0.1)
             chk_status = res.status_code
         except Exception as e:
             print("===== RETRY =====")
@@ -61,7 +61,7 @@ def retry(url):
 
 
 def check_id(url):
-    resume_id = int(re.search('\/\d+\/', url).group(0).replace('/', ''))
+    resume_id = int(re.search(r'\/\d+\/', url).group(0).replace('/', ''))
     if len(list(col_bkk_resume_info.find({'_id': resume_id}).limit(1))) > 0:
         return None
     else:
@@ -69,7 +69,6 @@ def check_id(url):
 
 
 def resume_indexer(intial_url, update_page):
-    date_cal = datetime.datetime.now()
     url = intial_url + str(update_page)
     res = retry(url)
     soup = BeautifulSoup(res.content, 'lxml')
@@ -80,10 +79,11 @@ def resume_indexer(intial_url, update_page):
     print("========== Extract resume_indexer items: {} ==========".format(total_page))
 
     #=== Looping next page ===#
-    for page in range(update_page + 1, total_page // 15):
+    for page in range(update_page + 1, (total_page // 15 + 2)):
         url = intial_url + str(page)
         resume_page_list(url)
-        col_bkk_update.update_one({'type': 'dump_resume_info'}, {'$set': {'next_page': page, 'date_cal': date_cal}}, upsert=True)
+        col_bkk_update.update_one({'_id': 'dump_resume_info'}, {
+                                  '$set': {'next_page': page, 'date_cal': datetime.datetime.now()}}, upsert=True)
 
 
 def resume_page_list(url):
@@ -96,14 +96,14 @@ def resume_page_list(url):
         print("resume_page_list")
     #=== Looping Extract resume_id ===#
     resume_link_list = [_['href'] for _ in resume_list]
-    resume_link_list = map(lambda link: check_id(link), resume_link_list)
-    resume_link_list = filter(lambda link: link != None, resume_link_list)
+    resume_link_list = [check_id(_) for _ in resume_link_list]
+    resume_link_list = [_ for _ in resume_link_list if _ != None]
 
     #=== Parallel [multiprocessing] ===#
     print("===== TODO Parallel =====")
     pool = multiprocessing.Pool(4)
-    result = pool.map_async(resume_page, resume_link_list, chunksize=4)
-    result = list(filter(lambda res: res != 0, result.get()))
+    result = pool.map_async(resume_page, resume_link_list)
+    result = [_ for _ in result.get() if _ != 0]
     if len(result) > 0:
         pool.close()
         pool.join()
@@ -119,8 +119,7 @@ def resume_page_list(url):
 
 
 def resume_page(url):
-    #=== Check Key ===#
-    resume_id = int(re.search('\/\d+\/', url).group(0).replace('/', ''))
+    resume_id = int(re.search(r'\/\d+\/', url).group(0).replace('/', ''))
     res = retry(url)
     soup = BeautifulSoup(res.content, 'lxml')
     try:
@@ -135,8 +134,8 @@ def resume_page(url):
         [div.decompose() for div in info_sum.select("div")]
         [b.decompose() for b in info_sum.select("b")]
         info_sum_list = re.sub(
-            '[\s+]', '|', info_sum.text.strip().replace(" ", "")).split("|")
-        info_sum_list = list(filter(lambda _: _ != "", info_sum_list))
+            r'[\s+]', '|', info_sum.text.strip().replace(" ", "")).split("|")
+        info_sum_list = [_ for _ in info_sum_list if _ != ""]
 
         #=== Extract Info Resume ===#
         info_main = soup.select_one("div#resumeDT")
@@ -158,8 +157,8 @@ def resume_page(url):
                 # pair {occupation, position}
                 op_dict = {}
                 for col in row.select('.span6'):
-                    key = re.sub('[\d.\s+]', '', col.b.text)
-                    val = re.sub('[\s+]', '', col.span.text)
+                    key = re.sub(r'[\d.\s+]', '', col.b.text)
+                    val = re.sub(r'[\s+]', '', col.span.text)
                     key = resume_want_mapper[key]
                     if key == 'asked_job':
                         if len(op_dict) == 0:
@@ -181,8 +180,8 @@ def resume_page(url):
             val = dl.select_one("dd")
             for span in val.select("span"):
                 span.decompose()
-            val = re.sub('[\s+]', '|', val.text.strip().replace(" ", ""))
-            val_list = list(filter(lambda _: _ != "", val.split("|")))
+            val = re.sub(r'[\s+]', '|', val.text.strip().replace(" ", ""))
+            val_list = [_ for _ in val.split("|") if _ != ""]
             resume_edu.append(
                 (key, val_list[1:3] + val_list[4:])
             )
@@ -196,7 +195,7 @@ def resume_page(url):
         if resume_exp != None:
             resume_exp_list = []
             for exp in resume_exp:
-                work_info_list = [re.sub('[\s+]', ' ', _.text.strip()) for _ in exp.select_one(
+                work_info_list = [re.sub(r'[\s+]', ' ', _.text.strip()) for _ in exp.select_one(
                     "div.o.col000.span6.padV10H20.cor4.bg_lightyellow").select("span.padL10")]
                 work_detail = exp.select_one("div.padB10.bb-code").text.strip()
                 resume_exp_list.append((work_info_list, work_detail))
@@ -216,7 +215,6 @@ def resume_page(url):
         }
 
         resume_skill = info_main.select_one("div#resume_skill")
-        lang_list = []
         if resume_skill != None:
             for skill_soup in resume_skill.select("div.padV10H20 > div.span11.offset1"):
                 # skill_lang
@@ -229,7 +227,7 @@ def resume_page(url):
                         key = row.select_one(
                             '.span2.bg_lightyellow.taCen.o').text.strip()
                         val_list = [lang_mapper[re.sub(
-                            '[\s+]', '', _.text).split(':')[1]] for _ in row.select('.pull-left')]
+                            r'[\s+]', '', _.text).split(':')[1]] for _ in row.select('.pull-left')]
                         resume_skill_dict['skill_lang'].append(
                             {
                                 'name': key,
@@ -245,13 +243,13 @@ def resume_page(url):
                     # pair {skill_key, skill_val}
                     try:
                         key, val = re.sub(
-                            '[\s+]', '', skill_soup.text).split(':')
+                            r'[\s+]', '', skill_soup.text).split(':')
                     except:
                         # skill_other too many values
                         continue
                     key = resume_skill_mapper[key]
                     if key == 'skill_typing':
-                        val_list = re.findall('\d+', val)
+                        val_list = re.findall(r'\d+', val)
                         try:
                             resume_skill_dict[key]['th_wm'] = val_list[0]
                         except:
@@ -351,7 +349,7 @@ def resume_page(url):
         if training_list != None:
             for train in training_list:
                 result_dict = {}
-                tl = [re.sub('[\s+]', ' ', _.text.strip())
+                tl = [re.sub(r'[\s+]', ' ', _.text.strip())
                       for _ in train.select("span")]
                 for tm, td in zip(train_mapper, tl):
                     result_dict[tm] = td
@@ -367,7 +365,7 @@ def resume_page(url):
 
 def checks_update():
     cursor = list(col_bkk_update.find(
-        {'type': 'dump_resume_info'}).limit(1))[0]
+        {'_id': 'dump_resume_info'}).limit(1))[0]
     try:
         return cursor['next_page']
     except:
@@ -390,6 +388,7 @@ if __name__ == '__main__':
     # Function update resume exists
 
     end = datetime.datetime.now()
-    col_bkk_update.update_one({'_id': 'dump_resume_info'}, {'$set': {'date_cal': end}}, upsert=True)
+    col_bkk_update.update_one({'_id': 'dump_resume_info'}, {
+                              '$set': {'date_cal': end}}, upsert=True)
     print("End time: {}".format(end))
     print("Cost time: {}".format(end - start))
