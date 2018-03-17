@@ -46,17 +46,14 @@ resume_skill_mapper = config.resume_skill_mapper
 
 
 def retry(url):
-    chk_status = -1
-    while chk_status != 200:
-        try:
-            res = requests.get(url, headers=header, timeout=10)
-            time.sleep(0.1)
-            chk_status = res.status_code
-        except Exception as e:
-            print("===== RETRY =====")
-            print(e)
-            print("Continue ...")
-            continue
+    try:
+        res = requests.get(url, headers=header, timeout=10)
+        time.sleep(0.1)
+    except Exception as e:
+        print("===== RETRY =====")
+        print(e)
+        print("Continue ...")
+        retry(url)
     return res
 
 

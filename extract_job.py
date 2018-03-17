@@ -30,7 +30,7 @@ def connect_db():
 conn = connect_db()
 dbname = config.DATABASE_CONFIG['dbname']
 col_bkk_job_info = conn[dbname]['job_info']
-col_bkk_update = conn[dbname]['bkk_updadte']
+col_bkk_update = conn[dbname]['bkk_update']
 col_bkk_log = conn[dbname]['bkk_log']
 
 pp = pprint.PrettyPrinter(indent=4)
@@ -44,17 +44,14 @@ edu_dict = config.edu_lvl_mapper
 
 
 def retry(url):
-    chk_status = -1
-    while chk_status != 200:
-        try:
-            res = requests.get(url, headers=header, timeout=10)
-            time.sleep(0.1)
-            chk_status = res.status_code
-        except Exception as e:
-            print("===== RETRY =====")
-            print(e)
-            print("Continue ...")
-            continue
+    try:
+        res = requests.get(url, headers=header, timeout=10)
+        time.sleep(0.1)
+    except Exception as e:
+        print("===== RETRY =====")
+        print(e)
+        print("Continue ...")
+        retry(url)
     return res
 
 
@@ -104,7 +101,7 @@ def job_page_list(url, _id):
         print("job_page_list")
     #=== Looping extract job_id ===#
     job_link_list = [_['href'] for _ in job_list]
-    job_link_list = [check_id(_) for _ in job_link_list]
+    job_link_list = [check_id(_) for _ in set(job_link_list)]
     job_link_list = [_ for _ in job_link_list if _ != None]
 
     #=== Parallel [multiprocessing] ===#
@@ -128,13 +125,32 @@ def job_page_list(url, _id):
     print("===== TASK DONE =====")
 
 
+def fix_JSON(json_message=None):
+    result = None
+    try:        
+        result = json.loads(json_message, strict=False)
+    except Exception as e:      
+        # Find the offending character index:
+        idx_to_replace = int(str(e).split(' ')[-1].replace(')', ''))     
+        # Remove the offending character:
+        json_message = list(json_message)
+        json_message[idx_to_replace] = ' '
+        new_message = ''.join(json_message)     
+        return fix_JSON(json_message=new_message)
+    return result
+
+
 def job_page(url, _id):
     res = retry(url)
     soup = BeautifulSoup(res.content, 'lxml')
     #=== Extract Json ===#
     try:
-        data_dict = json.loads(soup.find_all(
-            'script', {"type": "application/ld+json"})[1].text, strict=False)
+        try:
+            data_dict_str = soup.find_all('script', {"type": "application/ld+json"})[1].text
+        except IndexError:
+            data_dict_str = soup.find_all('script', {"type": r"application/ld+json"})
+            print(data_dict_str)
+        data_dict = fix_JSON(data_dict_str)
         job_title = data_dict['title']
         description = data_dict['description']
         company = data_dict['hiringOrganization']['name']
@@ -142,6 +158,7 @@ def job_page(url, _id):
         job_id = re.search(r'\d+/\d+', job_id).group(0).split("/")
         date_post = data_dict['datePosted']
     except Exception as e:
+        print(url)
         print("Step job_json_data", e)
         return 0
 
