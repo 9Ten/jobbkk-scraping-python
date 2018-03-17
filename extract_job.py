@@ -241,9 +241,9 @@ def job_page(url, _id):
 
 
 def checks_update():
-    cursor = list(col_bkk_update.find(
-        {'_id': 'dump_job_info'}).limit(1))[0]
     try:
+        cursor = list(col_bkk_update.find(
+            {'_id': 'dump_job_info'}).limit(1))[0]
         return cursor['next_page'], cursor['occupation_id']
     except:
         return 1, 238

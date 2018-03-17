@@ -364,9 +364,9 @@ def resume_page(url):
 
 
 def checks_update():
-    cursor = list(col_bkk_update.find(
-        {'_id': 'dump_resume_info'}).limit(1))[0]
     try:
+        cursor = list(col_bkk_update.find(
+            {'_id': 'dump_resume_info'}).limit(1))[0]
         return cursor['next_page']
     except:
         return 1

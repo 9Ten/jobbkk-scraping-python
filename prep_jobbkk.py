@@ -4,24 +4,6 @@ import pandas as pd
 import config
 
 #=== mongoDB Config ===#
-global col_bkk_job
-global col_bkk_resume
-try:
-    conn = MongoClient(
-        host='localhost',
-        port=27017
-    )
-except:
-    print("===== Error connect =====")
-
-col_bkk_job = conn[dbname]['job_info']
-col_bkk_resume = conn[dbname]['resume_info']
-col_bkk_update = conn[dbname]['bkk_updadte']
-col_bkk_log = conn[dbname]['bkk_log']
-
-pp = pprint.PrettyPrinter(indent=4)
-dbname = config.DATABASE_CONFIG[dbname]
-
 def connect_db():
     try:
         conn = MongoClient(
@@ -29,8 +11,15 @@ def connect_db():
             port=config.DATABASE_CONFIG['port'],
         )
     except Exception as e:
-        print('Error Config {}'.format(dbname))
+        print('Error Connection')
     return conn
+
+pp = pprint.PrettyPrinter(indent=4)
+dbname = config.DATABASE_CONFIG['dbname']
+col_bkk_job_info = conn[dbname]['job_info']
+col_bkk_resume_info = conn[dbname]['resume_info']
+col_bkk_update = conn[dbname]['bkk_updadte']
+col_bkk_log = conn[dbname]['bkk_log']
 
 
 def hash_key(word):
@@ -42,7 +31,7 @@ def hash_key(word):
         return None
 
         
-def collection_to_csv():
+def job_info_to_csv():
     pipeline = [
         {'$project': {'resume_id': 1, 'edu_hist': 1}},
         {'$limit': 1000},
@@ -58,7 +47,17 @@ def collection_to_csv():
             'edu_edu': "$edu_hist.edu_edu",
         }}
     ]
-    cursor = col_bkk_job.aggregate(pipeline, allowDiskUse=True)
+    cursor = col_bkk_resume_info.aggregate(pipeline, allowDiskUse=True)
     df = pd.DataFrame(list(cursor))
     df.to_csv('job.csv')
+    print("===== Done CSV =====")
+
+
+def resume_info_to_csv():
+    pipeline = [
+
+    ]
+    cursor = col_bkk_job_info.aggreagate(pipeline, allowDiskUse=True)
+    df = pd.DataFrame(list(cursor))
+    df.to_csv('resume.csv')
     print("===== Done CSV =====")
