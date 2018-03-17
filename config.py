@@ -1,5 +1,5 @@
 #=== job_page const ===#
-header = {'User-Agent': 'Chrome/64.0.3282.186'}
+header = {'User-Agent': 'Chrome/65.0.3325.162'}
 
 DATABASE_CONFIG = {
     'dbname': 'jobBkk',
